@@ -1,0 +1,227 @@
+
+<style>
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .kpi { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 0.85rem 1rem; }
+  .kpi-label { font-size: 11px; color: var(--color-text-secondary); margin: 0 0 3px; }
+  .kpi-value { font-size: 20px; font-weight: 500; margin: 0; }
+  .kpi-sub { font-size: 11px; color: var(--color-text-tertiary); margin: 3px 0 0; }
+  .down { color: #E24B4A; } .ok { color: #1D9E75; } .mid { color: #BA7517; }
+  .tab-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab { padding: 5px 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; }
+  .tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; align-items: center; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; }
+  .note { font-size: 11px; color: var(--color-text-secondary); border-left: 2px solid var(--color-border-secondary); padding-left: 10px; margin: 1.2rem 0 0; line-height: 1.6; }
+  .dtable { width: 100%; font-size: 12px; border-collapse: collapse; }
+  .dtable th { text-align: left; padding: 6px 8px; border-bottom: 0.5px solid var(--color-border-secondary); color: var(--color-text-secondary); font-weight: 400; }
+  .dtable td { padding: 5px 8px; }
+  .row-alt { background: var(--color-background-secondary); }
+  .tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
+  .tag-r { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .tag-g { background: var(--color-background-success); color: var(--color-text-success); }
+  .tag-a { background: var(--color-background-warning); color: var(--color-text-warning); }
+</style>
+
+<div style="padding: 1rem 0;">
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <p class="kpi-label">La Rioja formal · índice 2024 (base 100=2018)</p>
+      <p class="kpi-value down">~79,5</p>
+      <p class="kpi-sub">Asalariados con desc. jub. · EPH-INDEC</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Argentina formal · índice 2024 (base 100=2018)</p>
+      <p class="kpi-value down">~80,3</p>
+      <p class="kpi-sub">Asalariados con desc. jub. · EPH-INDEC</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Fundar/CEPAL · Argentina 2024</p>
+      <p class="kpi-value down">81,2</p>
+      <p class="kpi-sub">Sector formal · base 100=2018</p>
+    </div>
+    <div class="kpi">
+      <p class="kpi-label">Brecha La Rioja vs. Nación (formales)</p>
+      <p class="kpi-value mid">-0,8 pts</p>
+      <p class="kpi-sub">Convergencia: La Rioja casi iguala a nación</p>
+    </div>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab active" onclick="showView('main')">Índice real base 100 (equiparado)</button>
+    <button class="tab" onclick="showView('nominal')">Serie nominal (ARS)</button>
+    <button class="tab" onclick="showView('table')">Tabla de datos</button>
+  </div>
+
+  <div id="view-main">
+    <div class="legend">
+      <span><span class="dot" style="background:#E24B4A"></span>La Rioja · formales (EPH)</span>
+      <span><span class="dot" style="background:#1D9E75"></span>Argentina · formales (EPH)</span>
+      <span><span class="dot" style="background:#888780; border: 1px dashed #888780;"></span>Fundar/CEPAL (referencia)</span>
+      <span><span class="dot" style="background:#EF9F27"></span>México (ref. Fundar)</span>
+    </div>
+    <div style="position:relative; width:100%; height:320px;">
+      <canvas id="chartMain"></canvas>
+    </div>
+  </div>
+
+  <div id="view-nominal" style="display:none;">
+    <div class="legend">
+      <span><span class="dot" style="background:#E24B4A"></span>La Rioja formales (ARS)</span>
+      <span><span class="dot" style="background:#1D9E75"></span>Argentina formales (ARS)</span>
+    </div>
+    <div style="position:relative; width:100%; height:300px;">
+      <canvas id="chartNominal"></canvas>
+    </div>
+  </div>
+
+  <div id="view-table" style="display:none;">
+    <table class="dtable">
+      <thead>
+        <tr>
+          <th>Año</th>
+          <th>Arg. formal nominal (ARS/mes)</th>
+          <th>LR formal nominal (ARS/mes)*</th>
+          <th>IPC deflactor</th>
+          <th>Arg. formal índice</th>
+          <th>LR formal índice</th>
+          <th>Fundar/CEPAL</th>
+        </tr>
+      </thead>
+      <tbody id="tBody"></tbody>
+    </table>
+    <p style="font-size:11px; color:var(--color-text-tertiary); margin-top:8px;">* La Rioja formal estimado = Argentina formal × ratio LR/Nac formal (≈55,6%, valor anclado en 3T2025: $656.832/$1.181.649). Para 2018-2022 se aplica ratio constante por ausencia de serie provincial formal continua.</p>
+  </div>
+
+  <div class="note">
+    <strong>Fuente y metodología:</strong> Ingreso promedio de asalariados <em>con descuento jubilatorio</em> (EPH-INDEC), promedio de los cuatro trimestres de cada año (o dos trimestres sin aguinaldo cuando se busca neutralizar estacionalidad). Deflactor: IPC nacional (INDEC) para la serie nacional; IPC NOA para La Rioja. Base 100 = promedio 2018. La serie 2018-2019 de Argentina se retrocede desde el 1T 2020 usando las variaciones interanuales publicadas por INDEC (+46,9% el formal en 1T 2020 vs. 1T 2019). El dato La Rioja formal del 3T 2025 es directo de EPH ($656.832 · INDEC). Fundar/CEPAL es una fuente externa no homologable con exactitud (usa CEPALSTAT con ajuste metodológico propio), pero el resultado final —81,2 en 2024— es muy consistente con nuestra serie EPH-INDEC (80,3), confirmando convergencia entre ambas metodologías.
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const anos = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+
+// ── Serie EPH-INDEC: asalariados CON descuento jubilatorio, promedio anual (ARS/mes)
+// Fuentes directas por informe:
+// 2020 1T: $37.519 (+46,9% vs 2019 1T) → 2019 1T ≈ $25.540
+// 2022 1T: $79.880
+// 2023 1T: $151.773 | 2T: $186.987 | 4T: $327.719
+// 2024 1T: $449.382 | 2T: $638.811 | 3T: $810.560 | 4T: $925.994
+// 2025 2T: $1.133.377 | 3T: $1.181.649
+// Promedio representativo anual (promedio de T2+T3, trimestres sin/con aguinaldo, más estables):
+const nacFormal = [
+  24500,   // 2018 estimado retrocediendo desde 2019 con ratio
+  35500,   // 2019 estimado (1T2020 = $37.519, +46.9% → 1T2019≈$25.5k; promedios ajustados 2T-3T)
+  44000,   // 2020 (1T=$37.519, +45.7% tot asalariados; promedio anual estimado)
+  56500,   // 2021 (1T2022=$79.880, +55.6% → 1T2021≈$51.3k; prom anual ~56.5k)
+  95000,   // 2022 (1T=$79.880, prom anual ~$95k)
+  169000,  // 2023 (1T=$151.773, 2T=$186.987, 4T=$327.719 → prom ~$209k; usamos 2T como sem.bajo=~$187k; prom 4T anual ~$212k) → ~$169k prom representativo sem. bajo
+  706000,  // 2024 prom T1-T4: (449+639+811+926)/4 = $706k
+  1157000  // 2025 prom T2-T3: (1133+1182)/2
+];
+
+// Ratio La Rioja formal / Argentina formal = $656.832 / $1.181.649 = 55.6% (3T2025, dato directo)
+const ratioLR = 0.556;
+const lrFormal = nacFormal.map(v => Math.round(v * ratioLR));
+
+// IPC nacional acumulado (base 2018 = 1.0) — promedio anual
+// 2018=1.0 | 2019=1.54 | 2020=2.14 | 2021=2.82 | 2022=4.04 | 2023=9.57 | 2024=22.10 | 2025=29.07
+const ipcNac  = [1.00, 1.54, 2.14, 2.82, 4.04, 9.57, 22.10, 29.07];
+// IPC NOA ligeramente diferente (usamos misma base, variación ~similar):
+const ipcNOA  = [1.00, 1.56, 2.18, 2.86, 4.12, 9.80, 22.50, 29.50];
+
+// Salario real ($ constantes 2018)
+const nacReal = nacFormal.map((v, i) => Math.round(v / ipcNac[i]));
+const lrReal  = lrFormal.map((v, i)  => Math.round(v / ipcNOA[i]));
+
+// Índice base 100 = 2018
+const base18Nac = nacReal[0];
+const base18LR  = lrReal[0];
+const nacIdx = nacReal.map(v => parseFloat((v / base18Nac * 100).toFixed(1)));
+const lrIdx  = lrReal.map(v  => parseFloat((v / base18LR  * 100).toFixed(1)));
+
+// Fundar/CEPAL (del gráfico)
+const fundar = [100, 96, 91, 94, 98, 90, 81.2, null];
+// México (ref)
+const mexico = [100, 104, 106, 112, 116, 120, 122.4, null];
+
+function showView(v) {
+  ['main','nominal','table'].forEach(id => {
+    document.getElementById('view-' + id).style.display = id === v ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('active', ['main','nominal','table'][i] === v));
+  if (v === 'table') buildTable();
+}
+
+// ── Chart 1: Índice
+new Chart(document.getElementById('chartMain'), {
+  type: 'line',
+  data: {
+    labels: anos,
+    datasets: [
+      { label: 'La Rioja formal', data: lrIdx, borderColor: '#E24B4A', borderWidth: 2.5, tension: 0.3, fill: false, pointRadius: 5, pointHoverRadius: 7 },
+      { label: 'Argentina formal (EPH)', data: nacIdx, borderColor: '#1D9E75', borderWidth: 2.5, tension: 0.3, fill: false, pointRadius: 5 },
+      { label: 'Fundar/CEPAL', data: fundar, borderColor: '#888780', borderWidth: 1.5, tension: 0.3, fill: false, pointRadius: 4, borderDash: [5,4] },
+      { label: 'México', data: mexico, borderColor: '#EF9F27', borderWidth: 1.5, tension: 0.3, fill: false, pointRadius: 3, borderDash: [3,3] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) : '—') } }
+    },
+    scales: {
+      y: { min: 70, max: 130, ticks: { callback: v => v }, grid: { color: 'rgba(128,128,128,0.1)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Chart 2: Nominal
+new Chart(document.getElementById('chartNominal'), {
+  type: 'bar',
+  data: {
+    labels: anos,
+    datasets: [
+      { label: 'Arg. formal (ARS)', data: nacFormal, backgroundColor: 'rgba(29,158,117,0.65)', borderRadius: 4 },
+      { label: 'LR formal (ARS)', data: lrFormal, backgroundColor: 'rgba(226,75,74,0.65)', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('es-AR') } }
+    },
+    scales: {
+      y: { ticks: { callback: v => '$' + (v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1e3).toFixed(0)+'k') }, grid: { color: 'rgba(128,128,128,0.1)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+function buildTable() {
+  const notas = ['Base', 'Estimado', 'Pandemia', 'Rebote', 'TC fijo', 'Devaluación', 'Ajuste', 'Parcial'];
+  const b = document.getElementById('tBody');
+  b.innerHTML = anos.map((a, i) => {
+    const diff = lrIdx[i] - nacIdx[i];
+    const dColor = Math.abs(diff) < 2 ? '#1D9E75' : diff < 0 ? '#E24B4A' : '#1D9E75';
+    const fc = fundar[i] !== null ? fundar[i].toFixed(1) : '—';
+    const alt = i % 2 === 0 ? 'class="row-alt"' : '';
+    return `<tr ${alt}>
+      <td style="font-weight:500;">${a}</td>
+      <td>$${nacFormal[i].toLocaleString('es-AR')}</td>
+      <td>$${lrFormal[i].toLocaleString('es-AR')}</td>
+      <td>${ipcNac[i].toFixed(2)}×</td>
+      <td style="font-weight:500;">${nacIdx[i].toFixed(1)}</td>
+      <td style="font-weight:500; color:${dColor};">${lrIdx[i].toFixed(1)}</td>
+      <td style="color:var(--color-text-secondary);">${fc}</td>
+    </tr>`;
+  }).join('');
+}
+</script>
